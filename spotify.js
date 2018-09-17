@@ -27,7 +27,7 @@ exports.choosePlaylist = async function (user) {
     let res = await spotify.getUserPlaylists(user, {});
 
     for (let playlist of res.body.items) {
-        playlists.push({ name: playlist.name, href: playlist.href });
+        playlists.push({ name: playlist.name, id: playlist.href.substr(37) });
     }
 
     let toPrint = '';
@@ -40,4 +40,15 @@ exports.choosePlaylist = async function (user) {
     let ans = rl.question('Please choose a playlist: ');
 
     return playlists[ans - 1];
+}
+
+exports.getPlaylist = async function (playlistId) {
+    let songs = [];
+
+    let res = await spotify.getPlaylistTracks(playlistId);
+
+    for (let song of res.body.items) {
+        songs.push({authors: song.track.artists.map(a => a.name), name: song.track.name, album: song.track.album.name, length: song.track.duration_ms / 1000 });
+    }
+    return songs;
 }
