@@ -1,35 +1,43 @@
 'use strict'
 
 const config = require('./config.js'),
-    request = require('request'),
-    spotifyApi = require('spotify-web-api-node'),
-    http = require('http');
+    rl = require('readline-sync'),
+    spotifyApi = require('spotify-web-api-node');
 
 let spotify = new spotifyApi({
     clientId: config.spotify.clientId,
     clientSecret: config.spotify.clientSecret
 });
 
+let user = '';
+
 exports.init = async function () {
     let data = await spotify.clientCredentialsGrant();
     console.log('The access token is ' + data.body['access_token']);
     spotify.setAccessToken(data.body['access_token']);
+
+    await rl.question('What is your spotify name? ', (ans) => {
+        user = ans;
+    })
 }
 
-exports.choosePlaylist = function () {
+exports.choosePlaylist = async function (user) {
     let playlists = [];
 
-    spotify.getUserPlaylists('megamawman', {}).then((res) => {
-        console.log(res.body)
-        for (let playlist of res.body.items) {
-            playlists.push({ name: playlist.name, href: playlist.href });
-        }
-        next = res.body.next;
-        let toPrint = '';
+    let res = await spotify.getUserPlaylists(user, {});
 
-        for (let i = 0; i < playlists.length; i++) {
-            toPrint += `\n${i + 1}. ${playlists[i].name}`;
-        }
-        console.log(toPrint);
-    });
+    for (let playlist of res.body.items) {
+        playlists.push({ name: playlist.name, href: playlist.href });
+    }
+
+    let toPrint = '';
+
+    for (let i = 0; i < playlists.length; i++) {
+        toPrint += `\n${i + 1}. ${playlists[i].name}`;
+    }
+    console.log(toPrint + '\n');
+
+    let ans = rl.question('Please choose a playlist: ');
+
+    return playlists[ans - 1];
 }
