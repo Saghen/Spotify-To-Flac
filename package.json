@@ -19,6 +19,7 @@
   "dependencies": {
     "cheerio": "^1.0.0-rc.2",
     "request": "^2.88.0",
-    "spotify": "^0.3.0"
+    "spotify": "^0.3.0",
+    "spotify-web-api-node": "^4.0.0"
   }
 }
