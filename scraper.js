@@ -44,8 +44,7 @@ module.exports = class Scraper {
 
 		// Check every cell
 		$(elem).find('td div.tenbh').each((i, elem2) => {
-			let title = this.getSongTitle($, elem2);
-			songData.title = title;
+			songData = { ...this.getSongTitle($, elem2), ...songData };
 		});
 
 		$(elem).find('td span.gen').each((i, elem2) => {
@@ -63,7 +62,10 @@ module.exports = class Scraper {
 		let songInfo = {};
 
 		$(elem).find('p').each((i, elem2) => {
-			if (i == 0) songInfo.name = elem2.children[0].children[0].data;
+			if (i == 0) {
+				songInfo.name = elem2.children[0].children[0].data;
+				songInfo.url = elem2.children[0].attribs.href.replace('.html', '_download.html'); // Possible better alternative?
+			}
 			else songInfo.authors = elem2.children[0].data.split('; ');
 		});
 
