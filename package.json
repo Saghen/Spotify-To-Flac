@@ -18,7 +18,10 @@
   "homepage": "https://github.com/Saghen/Spotify-To-Flac#readme",
   "dependencies": {
     "cheerio": "^1.0.0-rc.2",
+    "cheerio-advanced-selectors": "^2.0.1",
     "readline-sync": "^1.4.9",
+    "request": "^2.88.0",
+    "request-promise-native": "^1.0.5",
     "spotify-web-api-node": "^4.0.0"
   }
 }

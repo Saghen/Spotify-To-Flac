@@ -1,87 +1,75 @@
-"use strict"
+'use strict'
 
-const cheerio = require('cheerio')
-	, request = require('request-promise-native')
-	, rTimeStamp = /[0-9]+:[0-9]{2}/g;
+let cheerio = require('cheerio')
+	, cheerioAdv = require('cheerio-advanced-selectors')
+	, request = require('request-promise-native');
 
-function resolveUrl(url) {
-	return request(url)
-		.then(htmlString => downloadPageText(htmlString))
-		//.then(findLinks)
-		//.then(() => this.done = true)
-		.catch(err => {console.log(err)});
-}
+cheerio = cheerioAdv.wrap(cheerio);
 
-function downloadPageText(htmlString) {
-	let $ = cheerio.load(htmlString),
-		songDataList = [];
+module.exports = class Scraper {
+	constructor({ authors: songAuthors, name: songName, album: songAlbum, length: songLength }) {
+		this.authors = songAuthors;
+		this.name = songName;
+		this.album = songAlbum;
+		this.length = songLength;
+		this.query = `${songName}-${songAuthors.join('-')}`.replace(' ', '-');
+	}
 
-	// Go through ever row
-	$('.tbtable tbody').find('tr').each((i, elem) => {
+	search() {
+		return request('http://search.chiasenhac.vn/search.php?s=' + this.query)
+			.then(htmlString => this.processSearch(htmlString))
+			//.then(findLinks)
+			//.then(() => this.done = true)
+			.catch(err => { console.log(err) });
+	}
 
-		getRowData($, elem)
-		.then(songData => {songDataList.push(songData)})
-		.catch(err => {});
-	});
+	processSearch(htmlString) {
+		const $ = cheerio.load(htmlString);
+		let songDataList = [];
 
-	console.log(songDataList);
-}
+		// Go through ever row
+		$('.tbtable:first tbody').find('tr:not(:first-child)').each((i, elem) => {
+			songDataList.push(this.processRow($, elem))
+		});
 
-function getBestMatch(songData) {
+		console.log(songDataList);
+	}
 
-}
+	getBestMatch(songData) {
 
-function getRowData($, elem) {
-	return new Promise((resolve, reject) => {
+	}
+
+	processRow($, elem) {
 		let songData = {};
 
 		// Check every cell
-		$(elem).find('td').each((j, elem2) => {
-
-			getSongTitle($, elem2)
-			.then(title => {songData.title = title})
-			.catch(err => {});
-
-			getSongTime($, elem2)
-			.then(time => {songData.time = time})
-			.catch(err => {});
+		$(elem).find('td div.tenbh').each((i, elem2) => {
+			let title = this.getSongTitle($, elem2);
+			songData.title = title;
 		});
 
-		resolve(songData);
-	});
+		$(elem).find('td span.gen').each((i, elem2) => {
+			let songTime = elem2.children[0].data.split(':');
+			songData.time = songTime.reduce((prev, val, i, arr) => {
+				if (i == 1) prev = +prev * 60 ** (arr.length - 1);
+				return prev += +val * 60 ** (arr.length - i - 1);
+			});
+		});
+
+		return songData;
+	}
+
+	getSongTitle($, elem) {
+		let songInfo = {};
+
+		$(elem).find('p').each((i, elem2) => {
+			if (i == 0) songInfo.name = elem2.children[0].children[0].data;
+			else songInfo.authors = elem2.children[0].data.split('; ');
+		});
+
+		return songInfo;
+	}
 }
-
-function getSongTitle($, elem) {
-	return new Promise((resolve, reject) => {
-		let songTitle = $(elem).find('div div[class=tenbh] p');
-
-		if(songTitle.html() != null) {
-			let songName = songTitle.first().find('a').html(),
-				songAuthor = songTitle.last().html();
-
-			//console.log('Found song title: ' + songAuthor + ' - ' + songName)
-
-			resolve(songAuthor + ' - ' + songName);
-		} else {
-			reject();
-		}
-	});
-}
-
-function getSongTime($, elem) {
-	return new Promise((resolve, reject) => {
-		let songTime = $(elem).find('span').html();
-
-		if(songTime != null) {
-			let timeStamp = songTime.match(rTimeStamp)
-			
-			if(typeof timeStamp[0] !== undefined)
-				resolve(timeStamp[0]);
-		} else reject();
-	});
-}
-
-resolveUrl('http://search.chiasenhac.vn/search.php?s=death+grips+get+got');
 
 /*
 module.exports = function({ author: songAuthor, name: songName, album: songAlbum, length: songLength}) {
