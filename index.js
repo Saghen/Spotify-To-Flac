@@ -5,10 +5,10 @@ const spotify = require('./spotify.js'),
 
 
 async function init() {
-    /*await spotify.init();
+    await spotify.init();
     let playlist = await spotify.choosePlaylist('megamawman');
     let songs = await spotify.getPlaylist(playlist.id);
-    console.log(songs);*/
+    console.log(songs);
 
     let scraper = new Scraper({
         authors: ['David Guetta', 'Bebe Rexha', 'J Balvin'],
@@ -17,7 +17,7 @@ async function init() {
         length: 198.946
     });
 
-    scraper.search();
+    scraper.start();
 }
 
 init();
