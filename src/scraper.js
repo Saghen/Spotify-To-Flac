@@ -3,7 +3,8 @@
 let cheerio = require('cheerio')
 	, cheerioAdv = require('cheerio-advanced-selectors')
 	, request = require('request-promise-native')
-	, fs = require('fs');
+	, fs = require('fs')
+	, stringSimilarity = require('string-similarity');
 
 cheerio = cheerioAdv.wrap(cheerio);
 
@@ -21,7 +22,7 @@ module.exports = class Scraper {
 		return request('http://search.chiasenhac.vn/search.php?s=' + this.query)
 			.then(htmlString => {
 				this.processSearch(htmlString);
-				console.log(this.songData);
+				console.log('Song data downloaded.')
 				this.downloadSong()
 			})
 			.catch(err => { console.log(err) });
@@ -71,15 +72,15 @@ module.exports = class Scraper {
 
 	downloadSong() {
 		let downloadInfo;
-		return request(this.songData[0].url)
+		return request(this.getBestMatch().url)
 			.then(htmlString => {
 				downloadInfo = this.getDownloadLink(htmlString);
 				console.log(downloadInfo);
-				return request(downloadInfo.url);
+				return request(downloadInfo.url).pipe(fs.createWriteStream(`${this.name} - ${this.authors.join(', ')}.${downloadInfo.format}`));
 			})
 			.then(res => {
-				let file = fs.createWriteStream(`${songName} - ${songAuthors.join(', ')}.${downloadInfo.format}`);
-				res.pipe(file);
+				//let file = fs.createWriteStream(`${this.name} - ${this.authors.join(', ')}.${downloadInfo.format}`);
+				//res.pipe(file);
 			});
 	}
 
@@ -107,6 +108,7 @@ module.exports = class Scraper {
 	}
 
 	getBestMatch() {
-
+		let matches = stringSimilarity.findBestMatch(this.name, this.songData.map(obj => obj.name));
+		return this.songData.find(obj => obj.name == matches.bestMatch.target);
 	}
 }
