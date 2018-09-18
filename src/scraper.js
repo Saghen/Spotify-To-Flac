@@ -4,7 +4,8 @@ let cheerio = require('cheerio')
 	, cheerioAdv = require('cheerio-advanced-selectors')
 	, request = require('request-promise-native')
 	, fs = require('fs')
-	, stringSimilarity = require('string-similarity');
+	, stringSimilarity = require('string-similarity')
+	, progress = require('request-progress');
 
 cheerio = cheerioAdv.wrap(cheerio);
 
@@ -16,7 +17,7 @@ module.exports = class Scraper {
 		this.length = songLength;
 		this.query = `${songName}-${songAuthors.join('-')}`.replace(' ', '-');
 		this.songData = [];
-	}
+		this.progress = { percent: 0, speed: 0, size: { total: 0,  transferred: 0 }, time: { elapsed: 36.235, } } };
 
 	start() {
 		return request('http://search.chiasenhac.vn/search.php?s=' + this.query)
@@ -76,11 +77,10 @@ module.exports = class Scraper {
 			.then(htmlString => {
 				downloadInfo = this.getDownloadLink(htmlString);
 				console.log(downloadInfo);
-				return request(downloadInfo.url).pipe(fs.createWriteStream(`${this.name} - ${this.authors.join(', ')}.${downloadInfo.format}`));
-			})
-			.then(res => {
-				//let file = fs.createWriteStream(`${this.name} - ${this.authors.join(', ')}.${downloadInfo.format}`);
-				//res.pipe(file);
+
+				let file = fs.createWriteStream(`${this.name} - ${this.authors.join(', ')}.${downloadInfo.format}`)
+				progress(request(downloadInfo.url).pipe(file))
+					.on('progress', state => this.progress = state);
 			});
 	}
 
