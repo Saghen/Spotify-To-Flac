@@ -72,12 +72,3 @@ module.exports = class Scraper {
 		return songInfo;
 	}
 }
-
-/*
-module.exports = function({ author: songAuthor, name: songName, album: songAlbum, length: songLength}) {
-	let urlSearch = 'http://search.chiasenhac.vn/search.php?s=',
-		query = songName.replace(' ', '+');
-
-
-}
-*/
