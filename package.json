@@ -19,6 +19,8 @@
   "dependencies": {
     "cheerio": "^1.0.0-rc.2",
     "cheerio-advanced-selectors": "^2.0.1",
+    "multi-progress": "^2.0.0",
+    "progress": "^2.0.0",
     "readline-sync": "^1.4.9",
     "request": "^2.88.0",
     "request-progress": "^3.0.0",

@@ -10,14 +10,16 @@ let cheerio = require('cheerio')
 cheerio = cheerioAdv.wrap(cheerio);
 
 module.exports = class Scraper {
-	constructor({ authors: songAuthors, name: songName, album: songAlbum, length: songLength }) {
+	constructor({ authors: songAuthors, name: songName, album: songAlbum, length: songLength }, multiProgress) {
 		this.authors = songAuthors;
 		this.name = songName;
 		this.album = songAlbum;
 		this.length = songLength;
 		this.query = `${songName}-${songAuthors.join('-')}`.replace(' ', '-');
 		this.songData = [];
-		this.progress = { percent: 0, speed: 0, size: { total: 0,  transferred: 0 }, time: { elapsed: 36.235, } } };
+		this.progress = { percent: 0, speed: 0, size: { total: 0,  transferred: 0 }, time: { elapsed: 36.235, } };
+		this.multiProgress = multiProgress;
+	}
 
 	start() {
 		return request('http://search.chiasenhac.vn/search.php?s=' + this.query)
@@ -78,9 +80,19 @@ module.exports = class Scraper {
 				downloadInfo = this.getDownloadLink(htmlString);
 				console.log(downloadInfo);
 
+				let bar = this.multiProgress.newBar('  downloading [:bar] :percent :etas', {
+					complete: '=',
+					incomplete: ' ',
+					width: 20,
+					total: +downloadInfo.size.split('mb')[0] * 1000000,
+				});
+
 				let file = fs.createWriteStream(`${this.name} - ${this.authors.join(', ')}.${downloadInfo.format}`)
-				progress(request(downloadInfo.url).pipe(file))
-					.on('progress', state => this.progress = state);
+				request(downloadInfo.url)
+					.on('progress', state => {
+						bar.tick(state.speed);
+					})
+					.pipe(file);
 			});
 	}
 
