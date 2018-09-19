@@ -18,7 +18,6 @@ module.exports = class Scraper {
 		this.length = songLength;
 		this.query = `${songName}-${songAuthors.join('-')}`.replace(' ', '-');
 		this.songData = [];
-		this.progress = { percent: 0, speed: 0, size: { total: 0,  transferred: 0 }, time: { elapsed: 36.235, } };
 		this.multiProgress = multiProgress;
 	}
 
@@ -79,7 +78,7 @@ module.exports = class Scraper {
 			.then(htmlString => {
 				downloadInfo = this.getDownloadLink(htmlString);
 
-				let file = fs.createWriteStream(`./output/${this.name} - ${this.authors.join(', ')}.${downloadInfo.format}`)
+				let file = fs.createWriteStream(`${this.name} - ${this.authors.join(', ')}.${downloadInfo.format}`)
 
 				let req = http.request(downloadInfo.url, (res) => {
 					res.pipe(file);
@@ -113,11 +112,17 @@ module.exports = class Scraper {
 
 		$('#downloadlink2 > b:first').find('a').each((i, elem) => {
 			let downloadInfo = this.processSongDownload($, elem);
-			if(downloadInfo !== undefined) downloadOptions.push(downloadInfo);
+			if (downloadInfo !== undefined) downloadOptions.push(downloadInfo);
 		});
 
 		// Implement a system for asking the user for the format they wish for
-		return downloadOptions.filter(obj => { return obj.format === 'flac' })[0];
+		let download = downloadOptions.filter(obj => { return obj.format === 'flac' })[0];
+		if (download === undefined) download = downloadOptions.filter(obj => { return obj.format === 'm4a' })[0];
+		if (download === undefined) download = downloadOptions.filter(obj => { return obj.format === 'mp3' })[0];
+		if (download === undefined) download = downloadOptions[0];
+		if (download === undefined) console.error(`An error occured finding a download for ${this.name}.`);
+
+		return download;
 	}
 
 	processSongDownload($, elem) {

@@ -13,18 +13,17 @@ let user = '';
 
 exports.init = async function () {
     let data = await spotify.clientCredentialsGrant();
-    console.log('The access token is ' + data.body['access_token']);
     spotify.setAccessToken(data.body['access_token']);
 
-    await rl.question('What is your spotify name? ', (ans) => {
-        user = ans;
-    })
+    user = rl.question('Spotify username: ');
 }
 
-exports.choosePlaylist = async function (user) {
+exports.choosePlaylist = async function () {
     let playlists = [];
 
-    let res = await spotify.getUserPlaylists(user, {});
+    console.log(user);
+
+    let res = await spotify.getUserPlaylists(user);
 
     for (let playlist of res.body.items) {
         playlists.push({ name: playlist.name, id: playlist.href.substr(37) });

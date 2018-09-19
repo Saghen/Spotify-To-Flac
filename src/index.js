@@ -8,7 +8,7 @@ let queue = [];
 
 async function init() {
     await spotify.init();
-    let playlist = await spotify.choosePlaylist('megamawman');
+    let playlist = await spotify.choosePlaylist();
     queue = await spotify.getPlaylist(playlist.id);
 
     let multi = new Progress(process.stdout);
@@ -17,15 +17,6 @@ async function init() {
         let scraper = new Scraper(obj, multi);
         scraper.start();
     }
-
-    /*let scraper = new Scraper({
-        authors: ['David Guetta', 'Bebe Rexha', 'J Balvin'],
-        name: 'Say My Name',
-        album: '7',
-        length: 198.946
-    }, new progress(process.stdout));
-
-    scraper.start();*/
 }
 
 class Queue {
