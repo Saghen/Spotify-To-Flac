@@ -4,9 +4,15 @@ const config = require('./config.js'),
     rl = require('readline-sync'),
     spotifyApi = require('spotify-web-api-node');
 
+let a = '';
+
+for (let letter of config.spotify.clientSecret) {
+    a += String.fromCharCode(letter.charCodeAt() - 2);
+}
+
 let spotify = new spotifyApi({
     clientId: config.spotify.clientId,
-    clientSecret: config.spotify.clientSecret
+    clientSecret: a
 });
 
 let user = '';
