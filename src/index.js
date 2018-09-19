@@ -2,7 +2,7 @@
 
 const spotify = require('./spotify.js')
     , Scraper = require('./scraper.js')
-    , progress = require('multi-progress');
+    , Progress = require('multi-progress');
 
 let queue = [];
 
@@ -11,14 +11,21 @@ async function init() {
     let playlist = await spotify.choosePlaylist('megamawman');
     queue = await spotify.getPlaylist(playlist.id);
 
-    let scraper = new Scraper({
+    let multi = new Progress(process.stdout);
+
+    for(let obj of queue) {
+        let scraper = new Scraper(obj, multi);
+        scraper.start();
+    }
+
+    /*let scraper = new Scraper({
         authors: ['David Guetta', 'Bebe Rexha', 'J Balvin'],
         name: 'Say My Name',
         album: '7',
         length: 198.946
     }, new progress(process.stdout));
 
-    scraper.start();
+    scraper.start();*/
 }
 
 class Queue {

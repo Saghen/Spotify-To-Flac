@@ -5,7 +5,8 @@ let cheerio = require('cheerio')
 	, request = require('request-promise-native')
 	, fs = require('fs')
 	, stringSimilarity = require('string-similarity')
-	, progress = require('request-progress');
+	, ProgressBar = require('progress')
+	, http = require('http');
 
 cheerio = cheerioAdv.wrap(cheerio);
 
@@ -25,8 +26,7 @@ module.exports = class Scraper {
 		return request('http://search.chiasenhac.vn/search.php?s=' + this.query)
 			.then(htmlString => {
 				this.processSearch(htmlString);
-				console.log('Song data downloaded.')
-				this.downloadSong()
+				this.downloadSong();
 			})
 			.catch(err => { console.log(err) });
 	}
@@ -36,7 +36,7 @@ module.exports = class Scraper {
 
 		// Go through ever row
 		$('.tbtable:first tbody').find('tr:not(:first-child)').each((i, elem) => {
-			this.songData.push(this.processRow($, elem))
+			this.songData.push(this.processRow($, elem));
 		});
 	}
 
@@ -78,21 +78,31 @@ module.exports = class Scraper {
 		return request(this.getBestMatch().url)
 			.then(htmlString => {
 				downloadInfo = this.getDownloadLink(htmlString);
-				console.log(downloadInfo);
 
-				let bar = this.multiProgress.newBar('  downloading [:bar] :percent :etas', {
-					complete: '=',
-					incomplete: ' ',
-					width: 20,
-					total: +downloadInfo.size.split('mb')[0] * 1000000,
+				let file = fs.createWriteStream(`./output/${this.name} - ${this.authors.join(', ')}.${downloadInfo.format}`)
+
+				let req = http.request(downloadInfo.url, (res) => {
+					res.pipe(file);
 				});
 
-				let file = fs.createWriteStream(`${this.name} - ${this.authors.join(', ')}.${downloadInfo.format}`)
-				request(downloadInfo.url)
-					.on('progress', state => {
-						bar.tick(state.speed);
-					})
-					.pipe(file);
+				req.on('response', res => {
+					var len = parseInt(res.headers['content-length'], 10);
+
+					var bar = this.multiProgress.newBar(` :percent :etas [:bar] ${this.name}`, {
+						complete: '=',
+						incomplete: ' ',
+						width: 20,
+						total: len
+					});
+
+					res.on('data', function (chunk) {
+						bar.tick(chunk.length);
+					});
+
+					res.on('end', () => bar.terminate());
+				});
+
+				req.end();
 			});
 	}
 
