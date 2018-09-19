@@ -61,4 +61,4 @@ typings/
 .next
 
 # Ignore downloaded mp3s
-*.mp3
+.mp3
