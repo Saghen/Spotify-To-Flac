@@ -26,14 +26,17 @@ exports.init = async function () {
 
 exports.choosePlaylist = async function () {
     let playlists = [];
+    let res;
+    let i = 0;
 
-    console.log(user);
+    do {
+        res = await spotify.getUserPlaylists(user, { limit: 20, offset: 20 * i });
 
-    let res = await spotify.getUserPlaylists(user);
-
-    for (let playlist of res.body.items) {
-        playlists.push({ name: playlist.name, id: playlist.href.substr(37) });
-    }
+        for (let playlist of res.body.items) {
+            playlists.push({ name: playlist.name, id: playlist.href.substr(37) });
+        }
+        i++;
+    } while(res.body.next)
 
     let toPrint = '';
 
@@ -55,5 +58,7 @@ exports.getPlaylist = async function (playlistId) {
     for (let song of res.body.items) {
         songs.push({authors: song.track.artists.map(a => a.name), name: song.track.name, album: song.track.album.name, length: song.track.duration_ms / 1000 });
     }
+
+    
     return songs;
 }
