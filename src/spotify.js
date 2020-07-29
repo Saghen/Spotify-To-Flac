@@ -1,64 +1,69 @@
-'use strict'
+"use strict";
 
-const config = require('./config.js'),
-    rl = require('readline-sync'),
-    spotifyApi = require('spotify-web-api-node');
+const config = require("./config.js")
+const rl = require("readline-sync")
+const spotifyApi = require("spotify-web-api-node");
 
-let a = '';
+let a = "";
 
 for (let letter of config.spotify.clientSecret) {
-    a += String.fromCharCode(letter.charCodeAt() - 2);
+  a += String.fromCharCode(letter.charCodeAt() - 2);
 }
+console.log(a);
 
 let spotify = new spotifyApi({
-    clientId: config.spotify.clientId,
-    clientSecret: a
+  clientId: config.spotify.clientId,
+  clientSecret: a
 });
 
-let user = '';
+let user = "";
 
-exports.init = async function () {
-    let data = await spotify.clientCredentialsGrant();
-    spotify.setAccessToken(data.body['access_token']);
+exports.init = async function() {
+  let data = await spotify.clientCredentialsGrant();
+  spotify.setAccessToken(data.body["access_token"]);
 
-    user = rl.question('Spotify username: ');
-}
+  user = rl.question("Spotify username: ");
+};
 
-exports.choosePlaylist = async function () {
-    let playlists = [];
-    let res;
-    let i = 0;
+exports.choosePlaylist = async function() {
+  let playlists = [];
+  let res;
+  let i = 0;
 
-    do {
-        res = await spotify.getUserPlaylists(user, { limit: 20, offset: 20 * i });
+  do {
+    res = await spotify.getUserPlaylists(user, { limit: 20, offset: 20 * i });
 
-        for (let playlist of res.body.items) {
-            playlists.push({ name: playlist.name, id: playlist.href.substr(37) });
-        }
-        i++;
-    } while(res.body.next)
-
-    let toPrint = '';
-
-    for (let i = 0; i < playlists.length; i++) {
-        toPrint += `\n${i + 1}. ${playlists[i].name}`;
+    for (let playlist of res.body.items) {
+      playlists.push({ name: playlist.name, id: playlist.href.substr(37) });
     }
-    console.log(toPrint + '\n');
+    i++;
+  } while (res.body.next);
 
-    let ans = rl.question('Please choose a playlist: ');
+  let toPrint = "";
 
-    return playlists[ans - 1];
-}
+  for (let i = 0; i < playlists.length; i++) {
+    toPrint += `\n${i + 1}. ${playlists[i].name}`;
+  }
+  console.log(toPrint + "\n");
 
-exports.getPlaylist = async function (playlistId) {
-    let songs = [];
+  let ans = rl.question("Please choose a playlist: ");
 
-    let res = await spotify.getPlaylistTracks(playlistId);
+  return playlists[ans - 1];
+};
 
-    for (let song of res.body.items) {
-        songs.push({authors: song.track.artists.map(a => a.name), name: song.track.name, album: song.track.album.name, length: song.track.duration_ms / 1000 });
-    }
+exports.getPlaylist = async function(playlistId) {
+  let songs = [];
 
-    
-    return songs;
-}
+  let res = await spotify.getPlaylistTracks(playlistId);
+
+  for (let song of res.body.items) {
+    songs.push({
+      authors: song.track.artists.map(a => a.name),
+      name: song.track.name,
+      album: song.track.album.name,
+      length: song.track.duration_ms / 1000
+    });
+  }
+
+  return songs;
+};
